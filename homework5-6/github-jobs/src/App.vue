@@ -32,7 +32,7 @@
         },
         methods:{
             searchPosition(){
-                if(this.job !== '' || this.locatio !== ''){
+                if(this.job !== '' || this.location !== ''){
                     this.$router.push({ path: 'positions', query: { job: this.job, location: this.location, page:1 } });
                 }
             }
