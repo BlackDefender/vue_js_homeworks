@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Whack A Mole!</title>
+    <link href='https://fonts.googleapis.com/css?family=Amatic+SC:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+</head>
+<body>
+<div id="app">
+
+    <h1>Whack-a-mole! <span class="score">{{score}}</span></h1>
+
+    <game-item ref="game" :holes-amount="holesAmount"></game-item>
+
+    <button class="button" @click="startGame">Start!</button>
+</div>
+
+
+<script>
+    /*
+    const holes = document.querySelectorAll('.hole');
+    const scoreBoard = document.querySelector('.score');
+    const moles = document.querySelectorAll('.mole');
+    let lastHole;
+    let timeUp = false;
+    let score = 0;
+
+    function randomTime(min, max) {
+        return Math.round(Math.random() * (max - min) + min);
+    }
+
+    function randomHole(holes) {
+        const idx = Math.floor(Math.random() * holes.length);
+        const hole = holes[idx];
+        if (hole === lastHole) {
+            console.log('Ah nah thats the same one bud');
+            return randomHole(holes);
+        }
+        lastHole = hole;
+        return hole;
+    }
+
+    function peep() {
+        const time = randomTime(200, 1000);
+        const hole = randomHole(holes);
+        hole.classList.add('up');
+        setTimeout(() => {
+            hole.classList.remove('up');
+            if (!timeUp) peep();
+        }, time);
+    }
+
+    function startGame() {
+        scoreBoard.textContent = 0;
+        timeUp = false;
+        score = 0;
+        peep();
+        setTimeout(() => timeUp = true, 10000)
+    }
+
+    function bonk(e) {
+        if (!e.isTrusted) return; // cheater!
+        score++;
+        this.parentNode.classList.remove('up');
+        scoreBoard.textContent = score;
+    }
+
+    moles.forEach(mole => mole.addEventListener('click', bonk));
+*/
+</script>
+<script>
+
+    const eventBus = new Vue({});
+
+    const game = {
+        props: {
+            holesAmount: {
+                type: Number,
+                required: true,
+                default: 6,
+                validator(value) {
+                    return value >= 2 && value <= 9;
+                }
+            }
+        },
+        data() {
+            return {
+                score: 0,
+                timeUp: false,
+                lastHole: null
+            }
+        },
+        created(){
+            eventBus.$on('startGame', this.startGame);
+        },
+        methods: {
+            randomTime(min, max) {
+                return Math.round(Math.random() * (max - min) + min);
+            },
+            randomHole() {
+                const idx = Math.floor(Math.random() * this.holesAmount);
+                const hole = this.$refs.holes[idx];
+                if (hole === this.lastHole) {
+                    return this.randomHole();
+                }
+                this.lastHole = hole;
+                return hole;
+            },
+            peep() {
+                const time = this.randomTime(200, 1000);
+                const hole = this.randomHole();
+                hole.classList.add('up');
+                setTimeout(() => {
+                    hole.classList.remove('up');
+                    if (!this.timeUp) this.peep();
+                }, time);
+            },
+            startGame() {
+                this.timeUp = false;
+                this.score = 0;
+                eventBus.$emit('scoreChange', this.score);
+                this.peep();
+                setTimeout(() => this.timeUp = true, 10000);
+            },
+            bonk(e) {
+                if (!e.isTrusted) return; // cheater!
+                this.score++;
+                e.target.parentNode.classList.remove('up');
+                eventBus.$emit('scoreChange', this.score);
+            }
+        },
+        template: `
+        <div class="game">
+            <div v-for="index in holesAmount" ref="holes" class="hole" :class="'hole'+index">
+                <div class="mole" @click="bonk($event)"></div>
+            </div>
+        </div>
+        `
+    };
+
+    new Vue({
+        el: '#app',
+        components: {
+            'game-item': game
+        },
+        created(){
+            eventBus.$on('scoreChange', this.scoreChange);
+        },
+        data: {
+            holesAmount: 3,
+            score: 0
+        },
+        methods: {
+            scoreChange(score){
+                this.score = score;
+            },
+            startGame() {
+                eventBus.$emit('startGame');
+            }
+        }
+    });
+</script>
+</body>
+</html>

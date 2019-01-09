@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+    <style>
+        body {
+            font-size: 20px;
+            font-family: sans-serif;
+            color: #333;
+        }
+
+        .question {
+            font-weight: 600;
+        }
+
+        .answers {
+            margin-bottom: 20px;
+        }
+
+        .answers label {
+            display: block;
+        }
+
+        #submit {
+            font-family: sans-serif;
+            font-size: 20px;
+            background-color: #279;
+            color: #fff;
+            border: 0;
+            border-radius: 3px;
+            padding: 20px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        #submit:hover {
+            background-color: #38a;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <form @submit.prevent="submit">
+        <div id="quiz">
+            <quiz-item
+                    v-for="(q, index) in questions"
+                    :key="q.question"
+                    :question="q.question"
+                    :answers="q.answers"
+                    :correct-answer="q.correctAnswer"
+                    :index="index"
+            ></quiz-item>
+        </div>
+        <button id="submit">Submit Quiz</button>
+    </form>
+
+    <div v-if="submitted">
+        {{ testResult }} out of {{ questions.length }}
+    </div>
+</div>
+
+<script>
+    const myQuestions = [
+        {
+            question: "Who is the strongest?",
+            answers: {
+                a: "Superman",
+                b: "The Terminator",
+                c: "Waluigi, obviously"
+            },
+            correctAnswer: "c"
+        },
+        {
+            question: "What is the best site ever created?",
+            answers: {
+                a: "SitePoint",
+                b: "Simple Steps Code",
+                c: "Trick question; they're both the best"
+            },
+            correctAnswer: "c"
+        },
+        {
+            question: "Where is Waldo really?",
+            answers: {
+                a: "Antarctica",
+                b: "Exploring the Pacific Ocean",
+                c: "Sitting in a tree",
+                d: "Minding his own business, so stop asking"
+            },
+            correctAnswer: "d"
+        }
+    ];
+
+    let Question = {
+        props: {
+            question: {
+                type: String,
+                required: true
+            },
+            answers: {
+                type: Object,
+                required: true
+            },
+            correctAnswer: {
+                type: String,
+                required: true
+            },
+            index: {
+                type: Number,
+                required: true
+            }
+        },
+        methods: {
+            sendAnswerToParent(letter){
+                this.$parent.$emit('answerSelected', this.index, letter === this.correctAnswer);
+            }
+        },
+        template: `<div>
+      <div class="question">{{question}}</div>
+      <div class="answers">
+        <label v-for="(answer, letter) in answers">
+          <input type="radio" :name="'question_'+index" @click="sendAnswerToParent(letter)">
+          {{letter}} : {{answer}}
+        </label>
+      </div>
+    </div>`
+    };
+    new Vue({
+        el: '#app',
+        components: {
+            'quiz-item': Question
+        },
+        data: {
+            questions: myQuestions,
+            submitted: false,
+            answers: myQuestions.map(()=>false),
+            testResult: 0
+        },
+        created(){
+            this.$on('answerSelected', this.onAnswerSelected);
+        },
+        methods: {
+            onAnswerSelected(questionIndex, isAnswerCorrect){
+                this.answers[questionIndex] = isAnswerCorrect;
+            },
+            submit() {
+                this.testResult =this.answers.reduce((sum, currentAnswer)=>{return sum+currentAnswer},0);
+                this.submitted = true;
+            }
+        }
+    });
+</script>
+</body>
+</html>
